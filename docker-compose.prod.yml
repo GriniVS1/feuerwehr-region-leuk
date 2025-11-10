@@ -1,0 +1,71 @@
+version: "3.9"
+services:
+  app:
+    image: ghcr.io/GriniVS1/feuerwehr-region-leuk:latest
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+
+  web:
+    image: nginx:stable-alpine
+    depends_on:
+      - app
+    volumes:
+      - app_storage:/var/www/html/storage
+    ports:
+      - "80:80"
+    environment:
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+    command: >
+      sh -c '
+      cat <<EOF > /etc/nginx/nginx.conf
+      user  nginx;
+      worker_processes auto;
+      events { worker_connections 1024; }
+      http {
+        include       /etc/nginx/mime.types;
+        sendfile        on;
+        server {
+          listen 80;
+          server_name _;
+          root /var/www/html/public;
+          index index.php index.html;
+          location / {
+            try_files \$uri /index.php?\$query_string;
+          }
+          location ~ \.php$ {
+            fastcgi_pass app:9000;
+            fastcgi_index index.php;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME /var/www/html/public/index.php;
+          }
+          location ~* \.(?:css|js|png|jpg|jpeg|gif|ico|svg)$ {
+            expires 1w;
+            access_log off;
+          }
+        }
+      }
+      EOF
+      && nginx -g "daemon off;"
+      '
+    volumes_from:
+      - app:ro
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: myapp
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  mysql_data:
+  app_storage:
