@@ -5,6 +5,11 @@ FROM ghcr.io/railwayapp/nixpacks:debian as build
 WORKDIR /app
 COPY . .
 
+#curl, git, unzip installieren
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl git unzip && \
+    rm -rf /var/lib/apt/lists/*
+
 # PHP/Composer installieren
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
