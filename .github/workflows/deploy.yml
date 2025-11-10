@@ -27,7 +27,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/myapp:latest
+          tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/feuerwehr-regionleuk.ch:latest
           platforms: linux/amd64
 
   # 2️⃣ DEPLOY AUF SERVER
@@ -46,7 +46,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "docker-compose.prod.yml"
-          target: "~/apps/myapp/"
+          target: "~/apps/feuerwehr-regionleuk.ch/"
 
       - name: Starte Deployment über SSH
         uses: appleboy/ssh-action@v1.2.0
@@ -56,7 +56,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            cd ~/apps/myapp
+            cd ~/apps/feuerwehr-regionleuk.ch
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             docker compose -f docker-compose.prod.yml exec -T app php artisan migrate --force
